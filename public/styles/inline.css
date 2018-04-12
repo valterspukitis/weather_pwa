@@ -405,7 +405,7 @@ body {
     color: white;
     background-color: #3f51b5; }
 
-#homescreen-button, #login-button {
+#homescreen-button, #buttonLogin {
     width: 270px;
     background-color: #008800;
     margin: 20px auto;

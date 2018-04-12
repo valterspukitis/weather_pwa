@@ -100,6 +100,10 @@
     app.toggleAddDialog(false);
   });
 
+  document.getElementById("butLoggedOut").addEventListener("click", function() {
+    // Close the add new city dialog
+    app.toggleLoggedOutDialog(false);
+  });
 
   /*****************************************************************************
    *
@@ -113,6 +117,14 @@
       app.addDialog.classList.add('dialog-container--visible');
     } else {
       app.addDialog.classList.remove('dialog-container--visible');
+    }
+  };
+
+  app.toggleLoggedOutDialog = function(visible) {
+    if (visible) {
+      app.loggedOutDialog.classList.add("dialog-container--visible");
+    } else {
+      app.loggedOutDialog.classList.remove("dialog-container--visible");
     }
   };
 
@@ -404,42 +416,6 @@
              .then(function() { console.log('Service Worker Registered'); });
   }
 var deferredPrompt;
-
-  window.addEventListener("beforeinstallprompt", function(e) {
-    console.log("beforeinstallprompt Event fired");
-    e.preventDefault();
-
-    // Stash the event so it can be triggered later.
-    deferredPrompt = e;
-    buttonAddToHomescreen.style.display = "block";
-
-    return false;
-  });
-
-  var buttonAddToHomescreen = document.getElementById("buttonAddToHomescreen");
-
-  buttonAddToHomescreen.addEventListener("click", function() {
-    if (deferredPrompt !== undefined) {
-      // The user has had a positive interaction with our app and Chrome
-      // has tried to prompt previously, so let's show the prompt.
-      deferredPrompt.prompt();
-
-      // Follow what the user has done with the prompt.
-      deferredPrompt.userChoice.then(function(choiceResult) {
-        console.log(choiceResult.outcome);
-
-        if (choiceResult.outcome == "dismissed") {
-          console.log("User cancelled home screen install");
-        } else {
-          console.log("User added to home screen");
-        }
-
-        // We no longer need the prompt.  Clear it up.
-        deferredPrompt = null;
-        buttonAddToHomescreen.style.display = "none";
-      });
-    }
-  });
 
   var clientId = null;
 
