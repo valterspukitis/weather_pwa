@@ -23,8 +23,11 @@
     spinner: document.querySelector('.loader'),
     cardTemplate: document.querySelector('.cardTemplate'),
     container: document.querySelector('.main'),
-    addDialog: document.querySelector('.dialog-container'),
-    daysOfWeek: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    addDialog: document.querySelector(".dialog-container.dialog-add-city"),
+    loggedOutDialog: document.querySelector(
+      ".dialog-container.dialog-logged-out"
+    ),
+    daysOfWeek: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
   };
 
   var deferredPrompt;
@@ -400,4 +403,95 @@
              .register('./service-worker.js')
              .then(function() { console.log('Service Worker Registered'); });
   }
+var deferredPrompt;
+
+  window.addEventListener("beforeinstallprompt", function(e) {
+    console.log("beforeinstallprompt Event fired");
+    e.preventDefault();
+
+    // Stash the event so it can be triggered later.
+    deferredPrompt = e;
+    buttonAddToHomescreen.style.display = "block";
+
+    return false;
+  });
+
+  var buttonAddToHomescreen = document.getElementById("buttonAddToHomescreen");
+
+  buttonAddToHomescreen.addEventListener("click", function() {
+    if (deferredPrompt !== undefined) {
+      // The user has had a positive interaction with our app and Chrome
+      // has tried to prompt previously, so let's show the prompt.
+      deferredPrompt.prompt();
+
+      // Follow what the user has done with the prompt.
+      deferredPrompt.userChoice.then(function(choiceResult) {
+        console.log(choiceResult.outcome);
+
+        if (choiceResult.outcome == "dismissed") {
+          console.log("User cancelled home screen install");
+        } else {
+          console.log("User added to home screen");
+        }
+
+        // We no longer need the prompt.  Clear it up.
+        deferredPrompt = null;
+        buttonAddToHomescreen.style.display = "none";
+      });
+    }
+  });
+
+  var clientId = null;
+
+  var worker = new SharedWorker("scripts/worker.js");
+  worker.port.start();
+
+  worker.port.addEventListener("message", function(event) {
+    const { id, type } = event.data;
+
+    switch (type) {
+      case "login":
+        buttonLogin.textContent = "Logout";
+        break;
+
+      case "logout":
+        buttonLogin.textContent = "Login";
+        if (id !== clientId) {
+          app.toggleLoggedOutDialog(true);
+        }
+        break;
+
+      case "connect":
+        const { isLoggedIn } = event.data;
+        buttonLogin.textContent = isLoggedIn ? "Logout" : "Login";
+
+        if (clientId === null) {
+          clientId = id;
+        }
+
+        break;
+
+      case "addcity":
+        if (id !== clientId) {
+          const { key, label } = event.data;
+
+          if (!app.selectedCities) {
+            app.selectedCities = [];
+          }
+
+          app.getForecast(key, label);
+          app.selectedCities.push({ key: key, label: label });
+        }
+
+        break;
+    }
+  });
+
+  var buttonLogin = document.getElementById("buttonLogin");
+
+  var isLoggedIn = false;
+
+  buttonLogin.addEventListener("click", function(event) {
+    worker.port.postMessage({ type: "changelogin", id: clientId });
+  });
 })();

@@ -41,6 +41,9 @@ self.addEventListener('install', function(e) {
       console.log('[ServiceWorker] Caching app shell');
       return cache.addAll(filesToCache);
     })
+    .then(function() {
+      return self.skipWaiting();
+    })
   );
 });
 
